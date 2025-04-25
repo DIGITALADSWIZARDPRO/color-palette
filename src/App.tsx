@@ -1,5 +1,6 @@
 import { ColorGenerator } from './components/ColorGenerator'
 import { Container, Typography } from '@mui/material'
+import './App.css';
 
 function App() {
   // Cette fonction nous permettra de voir les palettes générées dans la console
