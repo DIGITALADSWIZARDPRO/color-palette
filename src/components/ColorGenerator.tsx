@@ -1,7 +1,9 @@
 import { useState } from 'react'
-import { Box, Typography, TextField, Button, Grid, Paper, Alert } from '@mui/material'
+import { Box, Typography, TextField, Button,Paper, Alert } from '@mui/material'
 import { styled } from '@mui/material/styles'
 import chroma from 'chroma-js'
+import Grid from '@mui/material/Grid'
+
 
 interface ColorGeneratorProps {
   title?: string;
@@ -12,185 +14,186 @@ interface ColorGeneratorProps {
 }
 
 const ColorBox = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(2),
-  textAlign: 'center',
   height: '100px',
+  width: '150px',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  cursor: 'pointer', 
-  transition: 'all 0.2s ease-in-out',
-  position: 'relative',
-  flex: '1 1 150px',
-  maxWidth: '200px',
   borderRadius: '12px',
-  boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
+  boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
+  cursor: 'pointer',
+  position: 'relative',
+  transition: 'all 0.2s ease-in-out',
+  fontFamily: 'monospace',
+  textAlign: 'center',
   '&:hover': {
-    transform: 'translateY(-5px)',
-    boxShadow: '0 12px 20px rgba(0,0,0,0.15)',
+    transform: 'translateY(-4px)',
+    boxShadow: '0 8px 16px rgba(0,0,0,0.15)',
   },
 }))
 
-const PaletteContainer = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  flexWrap: 'wrap',
-  gap: theme.spacing(2),
-  justifyContent: 'center',
+const PaletteWrapper = styled(Box)(({ theme }) => ({
+  marginBottom: theme.spacing(4),
   padding: theme.spacing(2),
-  background: 'rgba(255, 255, 255, 0.1)',
   borderRadius: '16px',
-  backdropFilter: 'blur(10px)',
+  background: 'rgba(255,255,255,0.08)',
+  backdropFilter: 'blur(6px)',
 }))
 
 const StyledTextField = styled(TextField)(() => ({
   '& .MuiOutlinedInput-root': {
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: '30px',
-    transition: 'all 0.2s',
-    '&:hover': {
-      backgroundColor: '#fff',
-    },
   },
 }))
 
 const GenerateButton = styled(Button)(() => ({
   borderRadius: '30px',
-  padding: '12px 32px',
-  fontSize: '1.1rem',
+  padding: '10px 28px',
+  fontSize: '1rem',
   textTransform: 'none',
-  background: 'linear-gradient(45deg, #21a3a3 30%, #2196f3 90%)',
-  boxShadow: '0 4px 12px rgba(33, 163, 163, 0.3)',
+  background: 'linear-gradient(45deg, #2196f3, #21a3a3)',
   '&:hover': {
-    background: 'linear-gradient(45deg, #1a8383 30%, #1976d2 90%)',
-    boxShadow: '0 6px 15px rgba(33, 163, 163, 0.4)',
+    background: 'linear-gradient(45deg, #1976d2, #1a8383)',
   },
 }))
+
+const PALETTE_LABELS = ['Monochromatique', 'Complémentaire', 'Triadique', 'Analogue', 'Tétradique',
+  'Pastel']
 
 export const ColorGenerator = ({
   title = "Générateur de Palettes",
   subtitle = "Choisissez une couleur",
-  initialColor = "#845EC2",
+  initialColor = "#6ce68d",
   className,
   onColorGenerated
 }: ColorGeneratorProps) => {
   const [baseColor, setBaseColor] = useState(initialColor)
   const [palettes, setPalettes] = useState<string[][]>([])
   const [copyMessage, setCopyMessage] = useState('')
-  const [showCopyAlert, setShowCopyAlert] = useState(false)
   const [copiedColorIndex, setCopiedColorIndex] = useState<{ paletteIndex: number; colorIndex: number } | null>(null)
 
   const generatePalettes = () => {
     const color = chroma(baseColor)
     const hsl = color.hsl()
-    
+  
+    const monoPalette = chroma
+      .scale([color.brighten(1.2), color.darken(2)])
+      .colors(5)
+  
+    const complementary = chroma
+      .scale([
+        chroma.hsl((hsl[0] + 180) % 360, hsl[1], hsl[2]),
+        color
+      ])
+      .colors(5)
+  
+    const triadic = [0, 120, 240].map((deg, i) =>
+      chroma.hsl((hsl[0] + deg) % 360, hsl[1], 0.5 + 0.1 * ((i % 2) * 2 - 1)).hex()
+    )
+  
+    const analogous = [-30, 0, 30, 60, 90].map((deg) =>
+      chroma.hsl((hsl[0] + deg + 360) % 360, hsl[1], hsl[2]).hex()
+    )
+  
+    const tetradic = [0, 90, 180, 270].map((deg) =>
+      chroma.hsl((hsl[0] + deg) % 360, hsl[1], hsl[2]).hex()
+    )
+  
+    const pastel = Array.from({ length: 5 }, (_, i) =>
+      chroma(baseColor)
+        .set('hsl.l', 0.85 - i * 0.05)
+        .set('hsl.s', 0.4)
+        .hex()
+    )
+  
     const newPalettes = [
-      // Monochromatic
-      chroma.scale([color, color.darken(2)]).colors(5),
-      // Complementary
-      [color.hex(), chroma.hsl((hsl[0] + 180) % 360, hsl[1], hsl[2]).hex()],
-      // Triadic
-      [
-        color.hex(),
-        chroma.hsl((hsl[0] + 120) % 360, hsl[1], hsl[2]).hex(),
-        chroma.hsl((hsl[0] + 240) % 360, hsl[1], hsl[2]).hex()
-      ],
-      // Analogous
-      [
-        color.hex(),
-        chroma.hsl((hsl[0] + 30) % 360, hsl[1], hsl[2]).hex(),
-        chroma.hsl((hsl[0] - 30 + 360) % 360, hsl[1], hsl[2]).hex()
-      ],
+      monoPalette,
+      complementary,
+      triadic,
+      analogous,
+      tetradic,
+      pastel
     ]
+  
     setPalettes(newPalettes)
     onColorGenerated?.(newPalettes)
   }
+  
+  
 
   const copyToClipboard = async (color: string, paletteIndex: number, colorIndex: number) => {
     try {
       await navigator.clipboard.writeText(color)
       setCopyMessage('Copié !')
-      setShowCopyAlert(true)
       setCopiedColorIndex({ paletteIndex, colorIndex })
-      setTimeout(() => {
-        setShowCopyAlert(false)
-        setCopiedColorIndex(null)
-      }, 2000)
-    } catch (err) {
+      setTimeout(() => setCopiedColorIndex(null), 1500)
+    } catch {
       setCopyMessage('Erreur')
-      setShowCopyAlert(true)
     }
   }
 
   return (
     <Box className={className}>
       <Box sx={{ textAlign: 'center', mb: 4 }}>
-        <Typography variant="h4" component="h2" sx={{ mb: 2 }}>
+        <Typography variant="h4" component="h2" sx={{ mb: 1 }}>
           {title}
         </Typography>
         <Typography variant="subtitle1" sx={{ mb: 3 }}>
           {subtitle}
         </Typography>
-        
-        <Box sx={{ 
-          display: 'flex', 
-          gap: 2, 
-          justifyContent: 'center',
-          alignItems: 'center',
-          maxWidth: '400px',
-          margin: '0 auto'
-        }}>
+        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', alignItems: 'center' }}>
           <StyledTextField
             type="color"
             value={baseColor}
             onChange={(e) => setBaseColor(e.target.value)}
-            sx={{ width: '120px' }}
+            sx={{ width: '80px' }}
           />
-          <GenerateButton 
-            variant="contained" 
-            onClick={generatePalettes}
-          >
+          <GenerateButton variant="contained" onClick={generatePalettes}>
             Générer
           </GenerateButton>
         </Box>
       </Box>
 
-      <Grid container spacing={3}>
-        {palettes.map((palette: string[], paletteIndex: number) => (
-          <div key={paletteIndex}>
-            <PaletteContainer>
-              {palette.map((color: string, colorIndex: number) => (
-                <ColorBox
-                  key={colorIndex}
-                  sx={{ 
-                    backgroundColor: color, 
-                    color: chroma(color).luminance() > 0.5 ? '#000' : '#fff',
-                    fontFamily: 'monospace'
-                  }}
-                  onClick={() => copyToClipboard(color, paletteIndex, colorIndex)}
-                >
-                  {color}
-                  {showCopyAlert && 
-                   copiedColorIndex?.paletteIndex === paletteIndex && 
-                   copiedColorIndex?.colorIndex === colorIndex && (
-                    <Alert 
-                      severity="success"
-                      sx={{
-                        position: 'absolute',
-                        top: '-35px',
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        zIndex: 1,
-                      }}
-                    >
-                      {copyMessage}
-                    </Alert>
-                  )}
-                </ColorBox>
-              ))}
-            </PaletteContainer>
-          </div>
-        ))}
-      </Grid>
+      {palettes.map((palette, paletteIndex) => (
+        <PaletteWrapper key={paletteIndex}>
+          <Typography variant="h6" sx={{ mb: 2, textAlign: 'center', fontWeight: 500 }}>
+            {PALETTE_LABELS[paletteIndex]}
+          </Typography>
+          <Grid container spacing={2} justifyContent="center">
+  {palette.map((color, colorIndex) => (
+    <Grid key={colorIndex}>
+      <ColorBox
+        onClick={() => copyToClipboard(color, paletteIndex, colorIndex)}
+        sx={{
+          backgroundColor: color,
+          color: chroma(color).luminance() > 0.5 ? '#000' : '#fff',
+        }}
+      >
+        {color}
+        {copiedColorIndex?.paletteIndex === paletteIndex &&
+          copiedColorIndex?.colorIndex === colorIndex && (
+            <Alert
+              severity="success"
+              sx={{
+                position: 'absolute',
+                top: '-30px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                p: 0.5,
+                fontSize: '0.75rem'
+              }}
+            >
+              {copyMessage}
+            </Alert>
+          )}
+      </ColorBox>
+    </Grid>
+  ))}
+</Grid>
+
+        </PaletteWrapper>
+      ))}
     </Box>
   )
 }
