@@ -10,7 +10,7 @@ function App() {
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Typography variant="h3" component="h1" align="center" gutterBottom>
-        Test du Générateur de Couleurs
+        
       </Typography>
 
       {/* Test avec les props par défaut */}
