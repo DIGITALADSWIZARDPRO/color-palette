@@ -13,7 +13,7 @@ interface ColorGeneratorProps {
   onColorGenerated?: (palettes: string[][]) => void;
 }
 
-const ColorBox = styled(Paper)(() => ({
+const ColorBox = styled(Paper)(({ theme }) => ({
   height: '100px',
   width: '150px',
   display: 'flex',
